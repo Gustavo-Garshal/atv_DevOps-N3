@@ -1,0 +1,15 @@
+# Aplicar este arquivo volta o tráfego para o BLUE (v1.0) = rollback instantâneo.
+apiVersion: v1
+kind: Service
+metadata:
+  name: loja-api-bg
+  namespace: n3-gustavogarshal
+spec:
+  type: NodePort
+  selector:
+    app: loja-api-bg
+    cor: blue              # <- ESTA linha decide quem recebe o tráfego
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30081

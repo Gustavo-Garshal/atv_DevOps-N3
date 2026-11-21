@@ -1,0 +1,35 @@
+-- Executado automaticamente pela imagem do MySQL SOMENTE na primeira inicialização
+-- (quando o diretório de dados está vazio). O banco "loja" já é criado pela
+-- variável MYSQL_DATABASE, então aqui só criamos as tabelas e os dados de exemplo.
+
+-- Garante que acentos sejam lidos e gravados corretamente, independente do padrão do servidor.
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS categorias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    descricao VARCHAR(255),
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS produtos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    preco DECIMAL(10,2) NOT NULL,
+    quantidade_estoque INT NOT NULL DEFAULT 0,
+    categoria_id INT NOT NULL,
+    CONSTRAINT fk_produtos_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+) DEFAULT CHARSET = utf8mb4;
+
+INSERT INTO categorias (nome, descricao, ativo) VALUES
+    ('Eletrônicos', 'Produtos eletrônicos em geral', 1),
+    ('Alimentos',   'Itens alimentícios',            1),
+    ('Vestuário',   'Roupas e acessórios',           1);
+
+INSERT INTO produtos (nome, preco, quantidade_estoque, categoria_id) VALUES
+    ('Fone de Ouvido Bluetooth', 89.90,  50, 1),
+    ('Carregador USB-C',         49.90, 120, 1),
+    ('Arroz 5kg',                24.50, 120, 2),
+    ('Feijão 1kg',                8.90, 200, 2),
+    ('Camiseta Básica',          39.90,  80, 3);

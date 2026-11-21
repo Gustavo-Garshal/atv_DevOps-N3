@@ -1,0 +1,19 @@
+# Dispara 12 requisições dentro do cluster e mostra qual pod/versão respondeu cada uma.
+# Ver resultado: kubectl logs job/tester -n loja
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tester
+  namespace: n3-gustavogarshal
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: curl
+          image: curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - for i in 1 2 3 4 5 6 7 8 9 10 11 12; do curl -s http://loja-api/; echo; sleep 0.3; done

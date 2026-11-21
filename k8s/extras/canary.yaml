@@ -1,0 +1,38 @@
+# Canary: 1 pod da v2.0 ao lado dos 2 pods da v1.0 => ~1/3 do tráfego vai para a v2.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loja-api-canary
+  namespace: n3-gustavogarshal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loja-api
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: loja-api
+        track: canary
+    spec:
+      containers:
+        - name: api
+          image: loja-api:2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: loja-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: loja-secret, key: MYSQL_PASSWORD }
+          readinessProbe:
+            httpGet: { path: /ready, port: 3000 }
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 300m, memory: 256Mi }

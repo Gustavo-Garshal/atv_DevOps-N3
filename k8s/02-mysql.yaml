@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: n3-gustavogarshal
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: n3-gustavogarshal
+spec:
+  replicas: 1                 # banco NÃO escala assim: 1 réplica só
+  strategy:
+    type: Recreate            # derruba o antigo antes de subir o novo (2 MySQL no mesmo volume corrompe)
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef: { name: loja-config, key: DB_NAME }
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef: { name: loja-config, key: DB_USER }
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: loja-secret, key: MYSQL_PASSWORD }
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: loja-secret, key: MYSQL_ROOT_PASSWORD }
+          volumeMounts:
+            - name: dados
+              mountPath: /var/lib/mysql
+              subPath: mysql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          startupProbe:
+            tcpSocket: { port: 3306 }
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            tcpSocket: { port: 3306 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: "1", memory: 768Mi }
+      volumes:
+        - name: dados
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: init
+          configMap:
+            name: mysql-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: n3-gustavogarshal
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
